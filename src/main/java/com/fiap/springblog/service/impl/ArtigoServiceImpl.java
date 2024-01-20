@@ -8,6 +8,7 @@ import com.fiap.springblog.repository.ArtigoRepository;
 import com.fiap.springblog.repository.AutorRepository;
 import com.fiap.springblog.service.ArtigoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,7 @@ import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.aggregation.TypedAggregation;
 import org.springframework.data.mongodb.core.query.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Type;
 import java.time.LocalDate;
@@ -44,6 +46,7 @@ public class ArtigoServiceImpl implements ArtigoService {
         return this.artigoRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Artigo obterPorCodigo(String codigo) {
         return this.artigoRepository
@@ -51,6 +54,7 @@ public class ArtigoServiceImpl implements ArtigoService {
                 .orElseThrow(() -> new IllegalArgumentException("Artigo não existe!"));
     }
 
+    @Transactional
     @Override
     public Artigo criar(Artigo artigo) {
 
@@ -64,6 +68,7 @@ public class ArtigoServiceImpl implements ArtigoService {
         }
 
         return this.artigoRepository.save(artigo);
+
     }
 
     @Override
@@ -80,6 +85,7 @@ public class ArtigoServiceImpl implements ArtigoService {
         return this.mongoTemplate.find(query, Artigo.class);
     }
 
+    @Transactional
     @Override
     public void atualizar(Artigo artigo) {
 
@@ -115,9 +121,15 @@ public class ArtigoServiceImpl implements ArtigoService {
             artigoDb.setUrl(artigo.getUrl());
         }
 
+        if (artigo.getVersion() != null) {
+            artigoDb.setVersion(artigo.getVersion());
+        }
+
         this.artigoRepository.save(artigoDb);
+
     }
 
+    @Transactional
     @Override
     public void atualizarURLArtigo(String id, String novaURL) {
         Query query = new Query(Criteria.where("_id").is(id));
@@ -125,10 +137,13 @@ public class ArtigoServiceImpl implements ArtigoService {
         this.mongoTemplate.updateFirst(query, update, Artigo.class);
     }
 
+    @Transactional
+    @Override
     public void deleteById(String id) {
         this.artigoRepository.deleteById(id);
     }
 
+    @Transactional
     @Override
     public void deleteArtigoByMongoId(String id) {
         Query query = new Query(Criteria.where("_id").is(id));
