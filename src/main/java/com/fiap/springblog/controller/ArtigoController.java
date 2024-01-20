@@ -41,7 +41,7 @@ public class ArtigoController {
     }
 
     @PostMapping
-    public Artigo criar(@RequestBody Artigo artigo) {
+    public ResponseEntity<?> criar(@RequestBody Artigo artigo) {
         return this.artigoService.criar(artigo);
     }
 

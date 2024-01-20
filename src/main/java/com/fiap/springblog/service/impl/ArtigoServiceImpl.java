@@ -8,6 +8,7 @@ import com.fiap.springblog.repository.ArtigoRepository;
 import com.fiap.springblog.repository.AutorRepository;
 import com.fiap.springblog.service.ArtigoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +19,8 @@ import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.aggregation.TypedAggregation;
 import org.springframework.data.mongodb.core.query.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,10 +57,8 @@ public class ArtigoServiceImpl implements ArtigoService {
                 .orElseThrow(() -> new IllegalArgumentException("Artigo não existe!"));
     }
 
-    @Transactional
     @Override
-    public Artigo criar(Artigo artigo) {
-
+    public ResponseEntity<?> criar(Artigo artigo) {
         if (artigo.getAutor() != null && artigo.getAutor().getCodigo() != null) {
             Autor autor = this.autorRepository
                     .findById(artigo.getAutor().getCodigo())
@@ -67,9 +68,33 @@ public class ArtigoServiceImpl implements ArtigoService {
             artigo.setAutor(null);
         }
 
-        return this.artigoRepository.save(artigo);
+        try {
+            this.artigoRepository.save(artigo);
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        } catch (DuplicateKeyException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Artigo já existe na coleção!");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao criar artigo: " + e.getMessage());
+        }
 
     }
+
+//    @Transactional
+//    @Override
+//    public Artigo criar(Artigo artigo) {
+//
+//        if (artigo.getAutor() != null && artigo.getAutor().getCodigo() != null) {
+//            Autor autor = this.autorRepository
+//                    .findById(artigo.getAutor().getCodigo())
+//                    .orElseThrow(() -> new IllegalArgumentException("Autor não encontrado"));
+//            artigo.setAutor(autor);
+//        } else {
+//            artigo.setAutor(null);
+//        }
+//
+//        return this.artigoRepository.save(artigo);
+//
+//    }
 
     @Override
     public List<Artigo> findByDataGreaterThan(LocalDateTime dateTime) {
