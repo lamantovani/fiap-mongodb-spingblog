@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
@@ -22,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,6 +39,9 @@ public class ArtigoServiceImpl implements ArtigoService {
 
     @Autowired
     private AutorRepository autorRepository;
+
+    @Autowired
+    private MongoTransactionManager transactionManager;
 
     public ArtigoServiceImpl(MongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
@@ -57,6 +62,21 @@ public class ArtigoServiceImpl implements ArtigoService {
 
     @Override
     public ResponseEntity<?> criarArtigoComAutor(Artigo artigo, Autor autor) {
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.execute(status -> {
+            try {
+                // Iniciar a transação
+                autorRepository.save(autor);
+                artigo.setData(LocalDateTime.now());
+                artigo.setAutor(autor);
+                artigoRepository.save(artigo);
+            } catch (Exception e) {
+                //Trata o erro e lança a transação de volta em caso de exceção
+                status.setRollbackOnly();
+                throw new RuntimeException("Erro ao criar artigo com autor: " + e.getMessage());
+            }
+            return null;
+        });
         return null;
     }
 

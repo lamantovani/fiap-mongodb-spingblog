@@ -1,9 +1,7 @@
 package com.fiap.springblog.controller;
 
 
-import com.fiap.springblog.model.Artigo;
-import com.fiap.springblog.model.ArtigoStatusCount;
-import com.fiap.springblog.model.AutorTotalArtigo;
+import com.fiap.springblog.model.*;
 import com.fiap.springblog.service.ArtigoService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,9 +39,14 @@ public class ArtigoController {
         return this.artigoService.obterPorCodigo(codigo);
     }
 
+//    @PostMapping
+//    public ResponseEntity<?> criar(@Valid @RequestBody Artigo artigo) {
+//        return this.artigoService.criar(artigo);
+//    }
+
     @PostMapping
-    public ResponseEntity<?> criar(@Valid @RequestBody Artigo artigo) {
-        return this.artigoService.criar(artigo);
+    public ResponseEntity<?> criarArtigoComAutor(@RequestBody ArtigoComAutorRequest request) {
+        return this.artigoService.criarArtigoComAutor(request.getArtigo(), request.getAutor());
     }
 
     @GetMapping("/maiordata")
