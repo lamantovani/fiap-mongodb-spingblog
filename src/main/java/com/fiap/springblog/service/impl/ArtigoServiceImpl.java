@@ -9,7 +9,6 @@ import com.fiap.springblog.repository.AutorRepository;
 import com.fiap.springblog.service.ArtigoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,7 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -58,26 +56,31 @@ public class ArtigoServiceImpl implements ArtigoService {
     }
 
     @Override
-    public ResponseEntity<?> criar(Artigo artigo) {
-        if (artigo.getAutor() != null && artigo.getAutor().getCodigo() != null) {
-            Autor autor = this.autorRepository
-                    .findById(artigo.getAutor().getCodigo())
-                    .orElseThrow(() -> new IllegalArgumentException("Autor não encontrado"));
-            artigo.setAutor(autor);
-        } else {
-            artigo.setAutor(null);
-        }
-
-        try {
-            this.artigoRepository.save(artigo);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (DuplicateKeyException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Artigo já existe na coleção!");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao criar artigo: " + e.getMessage());
-        }
-
+    public ResponseEntity<?> criarArtigoComAutor(Artigo artigo, Autor autor) {
+        return null;
     }
+
+//    @Override
+//    public ResponseEntity<?> criar(Artigo artigo) {
+//        if (artigo.getAutor() != null && artigo.getAutor().getCodigo() != null) {
+//            Autor autor = this.autorRepository
+//                    .findById(artigo.getAutor().getCodigo())
+//                    .orElseThrow(() -> new IllegalArgumentException("Autor não encontrado"));
+//            artigo.setAutor(autor);
+//        } else {
+//            artigo.setAutor(null);
+//        }
+//
+//        try {
+//            this.artigoRepository.save(artigo);
+//            return ResponseEntity.status(HttpStatus.CREATED).build();
+//        } catch (DuplicateKeyException e) {
+//            return ResponseEntity.status(HttpStatus.CONFLICT).body("Artigo já existe na coleção!");
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao criar artigo: " + e.getMessage());
+//        }
+//
+//    }
 
 //    @Transactional
 //    @Override
@@ -122,35 +125,58 @@ public class ArtigoServiceImpl implements ArtigoService {
                 .findById(artigo.getCodigo())
                 .orElseThrow(() -> new IllegalArgumentException("Artigo não encontrado"));
 
-        if (artigo.getAutor() != null) {
-            artigoDb.setAutor(artigo.getAutor());
-        }
-
-        if (artigo.getTitulo() != null) {
-            artigoDb.setTitulo(artigo.getTitulo());
-        }
-
-        if (artigo.getTexto() != null) {
-            artigoDb.setTexto(artigo.getTexto());
-        }
-
-        if (artigo.getStatus() != null) {
-            artigoDb.setStatus(artigo.getStatus());
-        }
-
-        if (artigo.getData() != null) {
-            artigoDb.setData(artigo.getData());
-        }
-
-        if (artigo.getUrl() != null) {
-            artigoDb.setUrl(artigo.getUrl());
-        }
-
-        if (artigo.getVersion() != null) {
-            artigoDb.setVersion(artigo.getVersion());
-        }
+        atualizarCorpoDoArtigo(artigo, artigoDb);
 
         this.artigoRepository.save(artigoDb);
+
+    }
+
+    private static void atualizarCorpoDoArtigo(Artigo novoArtigo, Artigo antigoArtigo) {
+        if (novoArtigo.getAutor() != null) {
+            antigoArtigo.setAutor(novoArtigo.getAutor());
+        }
+
+        if (novoArtigo.getTitulo() != null) {
+            antigoArtigo.setTitulo(novoArtigo.getTitulo());
+        }
+
+        if (novoArtigo.getTexto() != null) {
+            antigoArtigo.setTexto(novoArtigo.getTexto());
+        }
+
+        if (novoArtigo.getStatus() != null) {
+            antigoArtigo.setStatus(novoArtigo.getStatus());
+        }
+
+        if (novoArtigo.getData() != null) {
+            antigoArtigo.setData(novoArtigo.getData());
+        }
+
+        if (novoArtigo.getUrl() != null) {
+            antigoArtigo.setUrl(novoArtigo.getUrl());
+        }
+
+        if (novoArtigo.getVersion() != null) {
+            antigoArtigo.setVersion(novoArtigo.getVersion());
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> atualizarArtigo(String id, Artigo artigo) {
+        try {
+            Artigo atigoExistente = this.artigoRepository.findById(id).orElse(null);
+
+            if (atigoExistente == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Artigo não encontrado!");
+            }
+
+            atualizarCorpoDoArtigo(artigo, atigoExistente);
+            this.artigoRepository.save(atigoExistente);
+            return ResponseEntity.status(HttpStatus.OK).body("Arquivo atualizado com sucesso!");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao atualizar o artigo: " + e.getMessage());
+        }
 
     }
 

@@ -5,6 +5,7 @@ import com.fiap.springblog.model.Artigo;
 import com.fiap.springblog.model.ArtigoStatusCount;
 import com.fiap.springblog.model.AutorTotalArtigo;
 import com.fiap.springblog.service.ArtigoService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
@@ -41,7 +42,7 @@ public class ArtigoController {
     }
 
     @PostMapping
-    public ResponseEntity<?> criar(@RequestBody Artigo artigo) {
+    public ResponseEntity<?> criar(@Valid @RequestBody Artigo artigo) {
         return this.artigoService.criar(artigo);
     }
 
@@ -58,8 +59,14 @@ public class ArtigoController {
     }
 
     @PutMapping
-    public void atualizar(@RequestBody Artigo artigo) {
+    public void atualizar(@Valid @RequestBody Artigo artigo) {
         this.artigoService.atualizar(artigo);
+    }
+
+    @PutMapping("/atualizar/{id}")
+    public ResponseEntity<?> atualizarArtigo(@PathVariable("id") String id,
+                                             @Valid @RequestBody Artigo artigo) {
+        return this.artigoService.atualizarArtigo(id, artigo);
     }
 
     @PutMapping("/{id}")
