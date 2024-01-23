@@ -49,6 +49,11 @@ public class ArtigoController {
         return this.artigoService.criarArtigoComAutor(request.getArtigo(), request.getAutor());
     }
 
+    @DeleteMapping("/delete-artigo-autor")
+    public void excluirArtigoEAutor(@RequestBody Artigo artigo) {
+        this.artigoService.excluirArtigoEAutor(artigo);
+    }
+
     @GetMapping("/maiordata")
     public List<Artigo> findByDataGreaterThan(@RequestParam("data") LocalDateTime data) {
         return this.artigoService.findByDataGreaterThan(data);
